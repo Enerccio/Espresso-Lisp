@@ -78,6 +78,28 @@ public class NativeStaticMethodCompiler {
         return nativeFunction;
     }
 
+    public static ElNativeFunction compileTwoArguments(ElEnvironment environment, String identifier,
+                                                         InvokeTwoArguments invokeTwo,
+                                                       NativeArgument nativeArgumentA, NativeArgument nativeArgumentB) {
+        ElNativeFunction nativeFunction = new ElNativeFunction(identifier, null);
+        ElNode dispatchNode = new ElNode(ElNodeMetaInfo.nativeMetaInfo(identifier)) {
+
+            @Override
+            @TruffleBoundary
+            public Object executeGeneric(VirtualFrame frame) throws UnexpectedResultException {
+                ElClosure closure = (ElClosure) frame.getObject(SLOT_CLOSURE);
+                return NativeWrappers.wrap(() -> {
+                    Object a = closure.getBinding(nativeArgumentA.getSymbol());
+                    Object b = closure.getBinding(nativeArgumentB.getSymbol());
+                    return invokeTwo.invoke(a, b);
+                }).get();
+            }
+        };
+        RootNode rootNode = compileNativeFunction(dispatchNode, nativeFunction, nativeArgumentA, nativeArgumentB);
+        nativeFunction.setCallTarget(rootNode.getCallTarget());
+        return nativeFunction;
+    }
+
     public static ElNativeFunction compileFunction(ElEnvironment environment, String identifier,
                                                    InvokeWithArguments invokeWithArguments, NativeArgument... nativeArguments) {
         ElNativeFunction nativeFunction = new ElNativeFunction(identifier, null);

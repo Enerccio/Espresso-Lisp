@@ -54,6 +54,7 @@ public class ElContext {
         addToBuiltin(new LispEnvironmentInfo(this).build());
         addToBuiltin(new LispCompile(this).build());
         addToBuiltin(new LispPrintln(this).build());
+        addToBuiltin(new LispCons(this).build());
         addToBuiltin(new LispCar(this).build());
         addToBuiltin(new LispCdr(this).build());
     }
@@ -136,18 +137,26 @@ public class ElContext {
             throw new ElCompileException("Bad define! signature");
         if (!(name instanceof ElSymbol nameSymbol))
             throw new ElCompileException("Bad define! signature");
-        if (!(args instanceof ElPair signature))
+        if (!(args instanceof ElPair) && args != nil)
             throw new ElCompileException("Bad define! signature");
 
-        // TODO macros
 
         ElNodeMetaInfo newMetaInfo = ElHasSourceInfo.get(arguments);
         ElBlockNode blockNode = new ElBlockNode(newMetaInfo, environment, arguments);
         ElFunctionEnterNode functionEnterNode = new ElFunctionEnterNode(ElFunctionEnterNode.createBaseBuilder().build(),
-                blockNode, signature, environment, parentClosure);
+                blockNode, args, environment, parentClosure);
         ElFunction function = new ElFunction(parentClosure, environment, nameSymbol);
         function.setCallTarget(functionEnterNode.getCallTarget());
         functionEnterNode.setFunction(function);
+
+        if ("macro".equals(typeSymbol.getName())) {
+            function.setMacro(true);
+        } else if ("function".equals(typeSymbol.getName())) {
+            function.setMacro(false);
+        } else {
+            throw new ElCompileException("Bad define! signature");
+        }
+
         return nameSymbol;
     }
 }

@@ -4,6 +4,7 @@ public class ElFunction extends ElCallable {
 
     private final ElEnvironment environment;
     private final ElSymbol name;
+    private boolean macro;
 
     public ElFunction(ElClosure closure, ElEnvironment environment, ElSymbol name) {
         super(closure);
@@ -15,11 +16,20 @@ public class ElFunction extends ElCallable {
 
     @Override
     public Object toDisplayString(boolean allowSideEffects) {
-        return "Function <" + environment.toDisplayString(allowSideEffects)
+        return (macro ? "Macro" : "Function") + " <" + environment.toDisplayString(allowSideEffects)
                 + ":" + name.toDisplayString(allowSideEffects) + ">";
     }
 
     public String getName() {
-        return "Function <" + name.toDisplayString(false) + ">";
+        return (macro ? "Macro" : "Function") + " <" + name.toDisplayString(false) + ">";
+    }
+
+    @Override
+    public boolean isMacro() {
+        return macro;
+    }
+
+    public void setMacro(boolean macro) {
+        this.macro = macro;
     }
 }

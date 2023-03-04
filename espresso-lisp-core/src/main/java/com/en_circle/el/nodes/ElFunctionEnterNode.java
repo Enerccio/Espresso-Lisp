@@ -7,7 +7,6 @@ import com.en_circle.el.nodes.control.ElReturnException;
 import com.en_circle.el.runtime.ElClosure;
 import com.en_circle.el.runtime.ElEnvironment;
 import com.en_circle.el.runtime.ElFunction;
-import com.en_circle.el.runtime.ElPair;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -28,7 +27,7 @@ public class ElFunctionEnterNode extends RootNode {
     private ElFunction function;
 
     public ElFunctionEnterNode(FrameDescriptor frameDescriptor,
-                               ElBlockNode blockNode, ElPair signature,
+                               ElBlockNode blockNode, Object signature,
                                ElEnvironment environment, ElClosure parentClosure) {
         super(ElLanguage.get(null), frameDescriptor);
 

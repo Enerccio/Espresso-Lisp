@@ -16,6 +16,7 @@ public class ElEvalListNode extends ElNode {
     private EvalExpressionState state = EvalExpressionState.NEW;
     private ElNode compiled;
     private ElEnvironmentChangeNode toplevelNode;
+    private ElReplacingNode parentNode;
 
     public ElEvalListNode(ElNodeMetaInfo metaInfo, ElPair nodes, ElEnvironment environment) {
         super(metaInfo);
@@ -53,6 +54,7 @@ public class ElEvalListNode extends ElNode {
                             ElContext.get(this).defineFunction(getMetaInfo(), environment, closure, arguments));
                 } else {
                     compiled = new ElGenericSexpressionEval(getMetaInfo(), this, environment, symbol, arguments);
+                    ((ElGenericSexpressionEval) compiled).setReplacingNode(parentNode);
                 }
             } else {
                 throw new ElRuntimeException("Head is not a symbol!");
@@ -62,6 +64,10 @@ public class ElEvalListNode extends ElNode {
 
     public void setParentNode(ElEnvironmentChangeNode toplevelNode) {
         this.toplevelNode = toplevelNode;
+    }
+
+    public void setMacroExpandNode(ElReplacingNode node) {
+        this.parentNode = node;
     }
 
     private enum EvalExpressionState {

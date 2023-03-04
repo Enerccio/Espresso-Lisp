@@ -3,15 +3,16 @@ package com.en_circle.el.nodes;
 
 import com.en_circle.el.context.ElContext;
 import com.en_circle.el.context.ElShapeFactory;
+import com.en_circle.el.nodes.control.ElRerunEvalException;
 import com.en_circle.el.runtime.ElClosure;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
 import java.util.function.Supplier;
 
-public class ElOpenClosureNode extends ElNode {
+public class ElOpenClosureNode extends ElNode implements ElReplacingNode {
 
-    private final ElNode block;
+    private ElNode block;
     private final Supplier<ElClosure> closureContainer;
 
     public ElOpenClosureNode(ElNodeMetaInfo metaInfo, ElNode block, Supplier<ElClosure> closureContainer) {
@@ -23,19 +24,37 @@ public class ElOpenClosureNode extends ElNode {
     @Override
     public int executeInt(VirtualFrame frame) throws UnexpectedResultException {
         setClosure(frame);
-        return block.executeInt(frame);
+        for (;;) {
+            try {
+                return block.executeInt(frame);
+            } catch (ElRerunEvalException ignored) {
+
+            }
+        }
     }
 
     @Override
     public double executeDouble(VirtualFrame frame) throws UnexpectedResultException {
         setClosure(frame);
-        return block.executeDouble(frame);
+        for (;;) {
+            try {
+                return block.executeDouble(frame);
+            } catch (ElRerunEvalException ignored) {
+
+            }
+        }
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) throws UnexpectedResultException {
         setClosure(frame);
-        return block.executeGeneric(frame);
+        for (;;) {
+            try {
+                return block.executeGeneric(frame);
+            } catch (ElRerunEvalException ignored) {
+
+            }
+        }
     }
 
     private void setClosure(VirtualFrame frame) {
@@ -44,4 +63,9 @@ public class ElOpenClosureNode extends ElNode {
         frame.setObject(SLOT_CLOSURE, closure);
     }
 
+    @Override
+    public void replace(ElNode node) {
+        block = node;
+        throw new ElRerunEvalException();
+    }
 }

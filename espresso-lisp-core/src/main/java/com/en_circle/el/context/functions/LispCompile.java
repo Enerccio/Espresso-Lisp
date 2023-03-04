@@ -70,16 +70,26 @@ public class LispCompile implements InvokeWithArguments {
         if (sexpression == null) {
             return new ElEmptyRootNode();
         } else {
+            ElLexerState state = lexer.mark();
+            TokenInfo tokenInfo = lexer.advance();
+            while (tokenInfo.getTokenType() == TokenType.WHITESPACE || tokenInfo.getTokenType() == TokenType.COMMENT) {
+                tokenInfo = lexer.advance();
+            }
+            if (tokenInfo.getTokenType() != TokenType.EOF) {
+                lexer.seek(state);
+            }
+
             Source remaining = lexer.remaining();
             if (sexpression instanceof ElPair list) {
                 ElEvalListNode evalNode = new ElEvalListNode(ElHasSourceInfo.get(sexpression), list, environment);
+                ElOpenClosureNode closureNode = new ElOpenClosureNode(ElHasSourceInfo.get(sexpression), evalNode, () -> null);
+                evalNode.setMacroExpandNode(closureNode);
                 if (remaining == null) {
-                    return ElStartEvalChainNode.create(ElHasSourceInfo.get(sexpression),
-                            new ElOpenClosureNode(ElHasSourceInfo.get(sexpression), evalNode, () -> null));
+                    return ElStartEvalChainNode.create(ElHasSourceInfo.get(sexpression), closureNode);
                 } else {
                     ElLazyCompileNode lazyCompileNode = ElLazyCompileNode.createLazyCompile(environment,
-                            ElStartEvalChainNode.create(ElHasSourceInfo.get(sexpression),
-                                new ElOpenClosureNode(ElHasSourceInfo.get(sexpression), evalNode, () -> null)), remaining);
+                            ElStartEvalChainNode.create(ElHasSourceInfo.get(sexpression), closureNode),
+                            remaining, ElHasSourceInfo.get(sexpression));
                     evalNode.setParentNode(lazyCompileNode);
                     return lazyCompileNode;
                 }
@@ -93,7 +103,7 @@ public class LispCompile implements InvokeWithArguments {
                             ElStartEvalChainNode.create(ElHasSourceInfo.get(sexpression),
                                 new ElOpenClosureNode(ElHasSourceInfo.get(sexpression),
                                         new ElLiteralNode(ElHasSourceInfo.get(sexpression), sexpression),
-                                        () -> null)), remaining);
+                                        () -> null)), remaining, ElHasSourceInfo.get(sexpression));
                 }
             }
 

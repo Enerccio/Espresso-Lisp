@@ -1,5 +1,6 @@
 package com.en_circle.el.nodes;
 
+import com.en_circle.el.context.ElContext;
 import com.en_circle.el.context.exceptions.ElBindException;
 import com.en_circle.el.context.exceptions.ElVMStateException;
 import com.en_circle.el.runtime.ElClosure;
@@ -26,6 +27,10 @@ public class ElResolveSymbolValue extends ElNode {
     }
 
     private Object resolveClosureBinding(ElClosure closure, ElSymbol symbol) {
+        ElSymbol nil = ElContext.get(this).getNil();
+        if (nil == symbol)
+            return nil;
+
         ElClosure currentClosure = closure;
         while (currentClosure != null) {
             if (closure.hasBinding(symbol)) {
