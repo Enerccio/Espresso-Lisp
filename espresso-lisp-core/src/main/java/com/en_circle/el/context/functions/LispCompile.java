@@ -31,7 +31,7 @@ public class LispCompile implements InvokeWithArguments {
 
     public ElNativeFunction build() {
         return NativeStaticMethodCompiler.compileFunction(context.getEnvironment(),
-                NAME, this,
+                NAME, this, null,
                 NativeArgument.withName(SOURCE_ARGUMENT),
                 NativeArgument.withName(ENVIRONMENT_ARGUMENT));
     }

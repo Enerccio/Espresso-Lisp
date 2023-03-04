@@ -8,6 +8,7 @@ import com.en_circle.el.runtime.ElPair;
 import com.en_circle.el.runtime.ElSymbol;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ElCompiledSignature implements ArgumentsToClosure {
@@ -17,6 +18,7 @@ public class ElCompiledSignature implements ArgumentsToClosure {
     private final ElNode parentNode;
 
     private final List<ElSymbol> requiredArguments = new ArrayList<>();
+    private ElSymbol allArgs;
 
     public ElCompiledSignature(Object signature, ElNode parentNode) {
         this.parentNode = parentNode;
@@ -28,6 +30,11 @@ public class ElCompiledSignature implements ArgumentsToClosure {
         if (!compiled) {
             compile();
         }
+
+        if (allArgs != null) {
+            closure.setBinding(allArgs, ElPair.fromList(Arrays.asList(arguments)));
+        }
+
         if (requiredArguments.size() != arguments.length) {
             throw new ElArgumentsException("Bad arity", parentNode);
         }
@@ -44,6 +51,12 @@ public class ElCompiledSignature implements ArgumentsToClosure {
         if (ElContext.get(null).getNil() == signature) {
             return;
         }
+
+        if (signature instanceof ElSymbol s) {
+            allArgs = s;
+            return;
+        }
+
         ElPair pair = (ElPair) signature;
         for (Object s : ElPair.asIterator(pair)) {
             ElSymbol symbol = (ElSymbol) s;
@@ -53,6 +66,10 @@ public class ElCompiledSignature implements ArgumentsToClosure {
 
     public static void validateSignature(Object signature, ElNode node) {
         if (ElContext.get(null).getNil() == signature) {
+            return;
+        }
+
+        if (signature instanceof ElSymbol) {
             return;
         }
 

@@ -2,7 +2,6 @@ package com.en_circle.el.lexer;
 
 
 import com.oracle.truffle.api.source.Source;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -181,7 +180,7 @@ public class ElLexer {
     private void tryMatchNumber(String text, TokenInfo tokenInfo) {
         // TODO: more shit
         if (digits.matcher(text).matches()) {
-            if (!text.startsWith("0")) {
+            if (!text.startsWith("0") || text.length() == 1) {
                 tokenInfo.setTokenType(TokenType.NUMBER);
             }
         }

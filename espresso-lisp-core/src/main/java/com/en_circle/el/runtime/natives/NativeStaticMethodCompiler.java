@@ -8,10 +8,7 @@ import com.en_circle.el.nodes.ElLoadArgumentsNode;
 import com.en_circle.el.nodes.ElNode;
 import com.en_circle.el.nodes.ElNodeMetaInfo;
 import com.en_circle.el.nodes.ElOpenClosureNode;
-import com.en_circle.el.runtime.ElClosure;
-import com.en_circle.el.runtime.ElEnvironment;
-import com.en_circle.el.runtime.ElNativeFunction;
-import com.en_circle.el.runtime.ElSymbol;
+import com.en_circle.el.runtime.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -20,6 +17,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.source.SourceSection;
 
+import java.util.Arrays;
 import java.util.function.Supplier;
 
 public class NativeStaticMethodCompiler {
@@ -53,7 +51,7 @@ public class NativeStaticMethodCompiler {
                 return runnable.get();
             }
         };
-        RootNode rootNode = compileNativeFunction(dispatchNode, nativeFunction);
+        RootNode rootNode = compileNativeFunction(dispatchNode, nativeFunction, null);
         nativeFunction.setCallTarget(rootNode.getCallTarget());
         return nativeFunction;
     }
@@ -73,7 +71,7 @@ public class NativeStaticMethodCompiler {
                 }).get();
             }
         };
-        RootNode rootNode = compileNativeFunction(dispatchNode, nativeFunction, nativeArgument);
+        RootNode rootNode = compileNativeFunction(dispatchNode, nativeFunction, null, nativeArgument);
         nativeFunction.setCallTarget(rootNode.getCallTarget());
         return nativeFunction;
     }
@@ -95,13 +93,14 @@ public class NativeStaticMethodCompiler {
                 }).get();
             }
         };
-        RootNode rootNode = compileNativeFunction(dispatchNode, nativeFunction, nativeArgumentA, nativeArgumentB);
+        RootNode rootNode = compileNativeFunction(dispatchNode, nativeFunction, null, nativeArgumentA, nativeArgumentB);
         nativeFunction.setCallTarget(rootNode.getCallTarget());
         return nativeFunction;
     }
 
     public static ElNativeFunction compileFunction(ElEnvironment environment, String identifier,
-                                                   InvokeWithArguments invokeWithArguments, NativeArgument... nativeArguments) {
+                                                   InvokeWithArguments invokeWithArguments, NativeArgument allArguments,
+                                                   NativeArgument... nativeArguments) {
         ElNativeFunction nativeFunction = new ElNativeFunction(identifier, null);
         ElNode dispatchNode = new ElNode(ElNodeMetaInfo.nativeMetaInfo(identifier)) {
 
@@ -113,14 +112,19 @@ public class NativeStaticMethodCompiler {
                 return NativeWrappers.wrap(() -> invokeWithArguments.invoke(closure, self, this)).get();
             }
         };
-        RootNode rootNode = compileNativeFunction(dispatchNode, nativeFunction, nativeArguments);
+        RootNode rootNode = compileNativeFunction(dispatchNode, nativeFunction, allArguments, nativeArguments);
         nativeFunction.setCallTarget(rootNode.getCallTarget());
         return nativeFunction;
     }
 
     private static RootNode compileNativeFunction(ElNode dispatchNode, ElNativeFunction nativeFunction,
+                                                  NativeArgument allArguments,
                                                   NativeArgument... args) {
         ArgumentsToClosure argumentsToClosure = (closure, arguments) -> {
+            if (allArguments != null) {
+                closure.setBinding(allArguments.getSymbol(), ElPair.fromList(Arrays.asList(arguments)));
+                return;
+            }
             if (arguments.length != args.length)
                 throw new ElArgumentsException("Arity exception", dispatchNode);
             for (int ix = 0; ix < args.length; ix++) {

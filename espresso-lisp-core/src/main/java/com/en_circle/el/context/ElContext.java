@@ -35,6 +35,7 @@ public class ElContext {
     private final AtomicInteger envCounter = new AtomicInteger(0);
     private final AtomicInteger gensymCounter = new AtomicInteger(0);
     private ElSymbol nil;
+    private ElSymbol t;
 
     public ElContext(Env env, ElLanguage elLanguage) {
         this.language = elLanguage;
@@ -49,7 +50,8 @@ public class ElContext {
 
     public void setup() {
         builtins = ElShapeFactory.allocateEnvironment(this, null);
-        nil = ElSymbolHelper.getSymbol("NIL");
+        nil = ElSymbolHelper.getSymbol("nil");
+        t = ElSymbolHelper.getSymbol("t");
 
         addToBuiltin(new LispEnvironmentInfo(this).build());
         addToBuiltin(new LispCompile(this).build());
@@ -57,6 +59,9 @@ public class ElContext {
         addToBuiltin(new LispCons(this).build());
         addToBuiltin(new LispCar(this).build());
         addToBuiltin(new LispCdr(this).build());
+        addToBuiltin(new LispPlus(this).build());
+        addToBuiltin(new LispMinus(this).build());
+        addToBuiltin(new LispEqualSign(this).build());
     }
 
     private void addToBuiltin(ElNativeFunction nativeFunction) {
@@ -100,6 +105,8 @@ public class ElContext {
     public ElSymbol allocateSymbol(String name) {
         if (name.equals("nil") && nil != null)
             return nil;
+        if (name.equals("t") && t != null)
+            return t;
         return internSymbolMap.computeIfAbsent(name, ElSymbol::new);
     }
 
@@ -113,6 +120,10 @@ public class ElContext {
 
     public ElSymbol getNil() {
         return nil;
+    }
+
+    public ElSymbol getT() {
+        return t;
     }
 
     public ElEnvironment getEnvironment() {
@@ -137,9 +148,8 @@ public class ElContext {
             throw new ElCompileException("Bad define! signature");
         if (!(name instanceof ElSymbol nameSymbol))
             throw new ElCompileException("Bad define! signature");
-        if (!(args instanceof ElPair) && args != nil)
+        if (!(args instanceof ElPair) && !(args instanceof ElSymbol))
             throw new ElCompileException("Bad define! signature");
-
 
         ElNodeMetaInfo newMetaInfo = ElHasSourceInfo.get(arguments);
         ElBlockNode blockNode = new ElBlockNode(newMetaInfo, environment, arguments);

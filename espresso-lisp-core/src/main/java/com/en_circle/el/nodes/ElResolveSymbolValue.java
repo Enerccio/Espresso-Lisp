@@ -30,6 +30,9 @@ public class ElResolveSymbolValue extends ElNode {
         ElSymbol nil = ElContext.get(this).getNil();
         if (nil == symbol)
             return nil;
+        ElSymbol t = ElContext.get(this).getT();
+        if (t == symbol)
+            return t;
 
         ElClosure currentClosure = closure;
         while (currentClosure != null) {
