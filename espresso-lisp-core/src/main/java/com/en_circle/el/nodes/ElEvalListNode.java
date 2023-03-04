@@ -1,6 +1,8 @@
 package com.en_circle.el.nodes;
 
+import com.en_circle.el.context.ElContext;
 import com.en_circle.el.context.exceptions.ElRuntimeException;
+import com.en_circle.el.runtime.ElClosure;
 import com.en_circle.el.runtime.ElEnvironment;
 import com.en_circle.el.runtime.ElPair;
 import com.en_circle.el.runtime.ElSymbol;
@@ -24,13 +26,13 @@ public class ElEvalListNode extends ElNode {
     @Override
     public Object executeGeneric(VirtualFrame frame) throws UnexpectedResultException {
         if (state == EvalExpressionState.NEW) {
-            compile();
+            compile((ElClosure) frame.getObject(SLOT_CLOSURE));
             state = EvalExpressionState.COMPILED;
         }
         return compiled.executeGeneric(frame);
     }
 
-    private void compile() {
+    private void compile(ElClosure closure) {
         if (!ElPair.empty(nodes)) {
             Object head = ElPair.car(nodes);
             Object arguments = ElPair.cdr(nodes);
@@ -40,6 +42,11 @@ public class ElEvalListNode extends ElNode {
                     compiled = new ElQuoteNode(getMetaInfo(), ElPair.nth(nodes, 1));
                 } else if ("if".equals(symbol.getName())) {
                     compiled = new ElIfNode(getMetaInfo(), environment, arguments);
+                } else if ("let!".equals(symbol.getName())) {
+                    compiled = new ElLetSingleNode(getMetaInfo(), environment, arguments);
+                } else if ("define!".equals(symbol.getName())) {
+                    compiled = new ElLiteralNode(getMetaInfo(),
+                            ElContext.get(this).defineFunction(getMetaInfo(), environment, closure, arguments));
                 } else {
                     compiled = new ElGenericSexpressionEval(getMetaInfo(), this, environment, symbol, arguments);
                 }

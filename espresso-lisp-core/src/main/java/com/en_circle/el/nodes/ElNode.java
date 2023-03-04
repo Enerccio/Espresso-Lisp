@@ -7,7 +7,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.source.SourceSection;
-import org.graalvm.polyglot.Source;
 
 @TypeSystemReference(ElNumberTypeSystem.class)
 public abstract class ElNode extends Node {
@@ -30,10 +29,6 @@ public abstract class ElNode extends Node {
     }
 
     public abstract Object executeGeneric(VirtualFrame frame) throws UnexpectedResultException;
-
-    public ElNodeMetaInfo getMetaInfoCopy() {
-        return metaInfo.copy();
-    }
 
     public ElNodeMetaInfo getMetaInfo() {
         return metaInfo;

@@ -1,8 +1,8 @@
 package com.en_circle.el.nodes;
 
+import com.en_circle.el.context.ArgumentsToClosure;
 import com.en_circle.el.context.exceptions.ElVMStateException;
 import com.en_circle.el.runtime.ElClosure;
-import com.en_circle.el.runtime.natives.ArgumentsToClosure;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 

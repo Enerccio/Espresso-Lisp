@@ -1,9 +1,6 @@
 package com.en_circle.el.nodes;
 
-import com.en_circle.el.runtime.ElCallable;
-import com.en_circle.el.runtime.ElEnvironment;
-import com.en_circle.el.runtime.ElHasSourceInfo;
-import com.en_circle.el.runtime.ElPair;
+import com.en_circle.el.runtime.*;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
@@ -27,8 +24,8 @@ public class ElCallFunction extends ElNode {
 
                 if (value instanceof ElPair l) {
                     evalList.add(new ElEvalListNode(mi, l, environment));
-                } else {
-                    evalList.add(new ElLiteralNode(mi, value));
+                } else if (value instanceof ElSymbol) {
+                    evalList.add(new ElEvalNode(mi, environment, value));
                 }
             }
         }

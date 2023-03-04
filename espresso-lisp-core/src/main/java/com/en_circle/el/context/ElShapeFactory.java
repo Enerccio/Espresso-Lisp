@@ -9,10 +9,10 @@ public class ElShapeFactory {
 
     public static final Shape ENVIRONMENT_SHAPE = Shape.newBuilder().layout(ElEnvironment.class).build();
 
-    public static ElEnvironment allocateEnvironment(ElContext context) {
+    public static ElEnvironment allocateEnvironment(ElContext context, String name) {
         AllocationReporter reporter = context.getReporter();
         reporter.onEnter(null, 0, AllocationReporter.SIZE_UNKNOWN);
-        ElEnvironment object = new ElEnvironment(ENVIRONMENT_SHAPE);
+        ElEnvironment object = new ElEnvironment(ENVIRONMENT_SHAPE, name);
         reporter.onReturnValue(object, 0, AllocationReporter.SIZE_UNKNOWN);
         return object;
     }

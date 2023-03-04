@@ -1,7 +1,7 @@
 package com.en_circle.el.runtime.natives;
 
 import com.en_circle.el.ElLanguage;
-import com.en_circle.el.context.ElContext;
+import com.en_circle.el.context.ArgumentsToClosure;
 import com.en_circle.el.context.exceptions.ElArgumentsException;
 import com.en_circle.el.context.exceptions.ElInvocationTargetException;
 import com.en_circle.el.nodes.ElLoadArgumentsNode;

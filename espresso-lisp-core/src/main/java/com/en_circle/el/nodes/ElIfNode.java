@@ -11,20 +11,20 @@ import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
 public class ElIfNode extends ElNode {
 
-    private final ElEnvironment environment;
-    private final ElPair arguments;
-    private ElEvalNode test;
-    private ElEvalNode iftrue;
-    private ElEvalNode iffalse;
+    private final ElEvalNode test;
+    private final ElEvalNode iftrue;
+    private final ElEvalNode iffalse;
 
     public ElIfNode(ElNodeMetaInfo metaInfo, ElEnvironment environment, Object arguments) {
         super(metaInfo);
         if (!(arguments instanceof ElPair pair)) {
             throw new ElCompileException("if with incorrect number of arguments", this);
         }
-        this.arguments = pair;
-        this.environment = environment;
         test = new ElEvalNode(ElHasSourceInfo.get(arguments), environment, ElPair.car(pair));
+        Object ifValue = ElPair.nth(arguments, 1);
+        iftrue = new ElEvalNode(ElHasSourceInfo.get(ifValue), environment, ifValue);
+        Object elseValue = ElPair.nth(arguments, 2);
+        iffalse = new ElEvalNode(ElHasSourceInfo.get(elseValue), environment, elseValue);
     }
 
     @Override
@@ -33,16 +33,8 @@ public class ElIfNode extends ElNode {
 
         Object testResult = test.executeGeneric(frame);
         if (testResult != nil) {
-            if (iftrue == null) {
-                Object ifValue = ElPair.nth(arguments, 1);
-                iftrue = new ElEvalNode(ElHasSourceInfo.get(ifValue), environment, ifValue);
-            }
             return iftrue.executeGeneric(frame);
         } else {
-            if (iffalse == null) {
-                Object ifValue = ElPair.nth(arguments, 2);
-                iffalse = new ElEvalNode(ElHasSourceInfo.get(ifValue), environment, ifValue);
-            }
             return iffalse.executeGeneric(frame);
         }
     }

@@ -12,11 +12,17 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.Shape;
 
+import java.util.Arrays;
+import java.util.List;
+
 @ExportLibrary(InteropLibrary.class)
 public class ElEnvironment extends DynamicObject implements ElObject {
 
-    public ElEnvironment(Shape shape) {
+    private final String name;
+
+    public ElEnvironment(Shape shape, String name) {
         super(shape);
+        this.name = name;
     }
 
     @ExportMessage
@@ -71,6 +77,14 @@ public class ElEnvironment extends DynamicObject implements ElObject {
         return null;
     }
 
+    public List<ElSymbol> getBindings() {
+        return getBindings(DynamicObjectLibrary.getUncached());
+    }
+
+    private List<ElSymbol> getBindings(@CachedLibrary("this") DynamicObjectLibrary objectLibrary) {
+        return (List<ElSymbol>) (Object) Arrays.asList(objectLibrary.getKeyArray(this));
+    }
+
     @ExportMessage
     boolean isScope() {
         return true;
@@ -90,7 +104,7 @@ public class ElEnvironment extends DynamicObject implements ElObject {
     @Override
     @ExportMessage
     public Object toDisplayString(boolean allowSideEffects) {
-        return toString();
+        return toString() + "<" + (name == null ? "_builtins" : name) + ">";
     }
 
 }

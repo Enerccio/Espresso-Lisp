@@ -135,23 +135,19 @@ public class ElPair implements ElObject, ElHasSourceInfo {
         return ElContext.get(null).getNil();
     }
 
-    public static Iterable<Object> asIterator(ElPair list) {
-        return new PairIterable(list);
+    public static Iterable<Object> asIterator(Object list) {
+        if (list instanceof ElPair pair)
+            return new PairIterable(pair);
+        return Collections.singleton(ElContext.get(null).getNil());
     }
 
-    private static class PairIterable implements Iterable<Object> {
-
-        private final ElPair head;
-
-        public PairIterable(ElPair head) {
-            this.head = head;
-        }
+    private record PairIterable(ElPair head) implements Iterable<Object> {
 
         @Override
-        public Iterator<Object> iterator() {
-            return new PairIterator(head);
+            public Iterator<Object> iterator() {
+                return new PairIterator(head);
+            }
         }
-    }
 
     private static class PairIterator implements Iterator<Object> {
 
