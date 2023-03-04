@@ -44,6 +44,10 @@ public class ElEvalListNode extends ElNode {
                     compiled = new ElIfNode(getMetaInfo(), environment, arguments);
                 } else if ("let!".equals(symbol.getName())) {
                     compiled = new ElLetSingleNode(getMetaInfo(), environment, arguments);
+                } else if ("set".equals(symbol.getName())) {
+                    Object binding = ElPair.car(arguments);
+                    Object newValue = ElPair.cdr(arguments);
+                    compiled = new ElSetNode(getMetaInfo(), environment, binding, ElPair.car(newValue));
                 } else if ("define!".equals(symbol.getName())) {
                     compiled = new ElLiteralNode(getMetaInfo(),
                             ElContext.get(this).defineFunction(getMetaInfo(), environment, closure, arguments));

@@ -19,4 +19,7 @@ public class ElFunction extends ElCallable {
                 + ":" + name.toDisplayString(allowSideEffects) + ">";
     }
 
+    public String getName() {
+        return "Function <" + name.toDisplayString(false) + ">";
+    }
 }

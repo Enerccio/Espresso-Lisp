@@ -147,6 +147,7 @@ public class ElContext {
                 blockNode, signature, environment, parentClosure);
         ElFunction function = new ElFunction(parentClosure, environment, nameSymbol);
         function.setCallTarget(functionEnterNode.getCallTarget());
+        functionEnterNode.setFunction(function);
         return nameSymbol;
     }
 }

@@ -6,6 +6,7 @@ import com.en_circle.el.context.exceptions.ElRuntimeException;
 import com.en_circle.el.nodes.control.ElReturnException;
 import com.en_circle.el.runtime.ElClosure;
 import com.en_circle.el.runtime.ElEnvironment;
+import com.en_circle.el.runtime.ElFunction;
 import com.en_circle.el.runtime.ElPair;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -24,6 +25,7 @@ public class ElFunctionEnterNode extends RootNode {
     }
 
     private final ElOpenClosureNode node;
+    private ElFunction function;
 
     public ElFunctionEnterNode(FrameDescriptor frameDescriptor,
                                ElBlockNode blockNode, ElPair signature,
@@ -48,5 +50,27 @@ public class ElFunctionEnterNode extends RootNode {
         } catch (ControlFlowException otherControlFlows) {
             throw new ElRuntimeException("Unexpected control flow!", otherControlFlows, -1, node);
         }
+    }
+
+    @Override
+    public String getQualifiedName() {
+        return (String) function.toDisplayString(false);
+    }
+
+    @Override
+    public String getName() {
+        return function.getName();
+    }
+
+    public ElOpenClosureNode getNode() {
+        return node;
+    }
+
+    public ElFunction getFunction() {
+        return function;
+    }
+
+    public void setFunction(ElFunction function) {
+        this.function = function;
     }
 }
