@@ -73,4 +73,5 @@ public class ElEvalListNode extends ElNode {
     private enum EvalExpressionState {
         NEW, COMPILED
     }
+
 }

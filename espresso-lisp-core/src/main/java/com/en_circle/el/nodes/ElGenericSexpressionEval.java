@@ -1,5 +1,7 @@
 package com.en_circle.el.nodes;
 
+import com.en_circle.el.context.TailCall;
+import com.en_circle.el.context.TailCallGuard;
 import com.en_circle.el.context.exceptions.ElRuntimeException;
 import com.en_circle.el.runtime.ElCallable;
 import com.en_circle.el.runtime.ElEnvironment;
@@ -29,7 +31,11 @@ public class ElGenericSexpressionEval extends ElNode {
     @Override
     public Object executeGeneric(VirtualFrame frame) throws UnexpectedResultException {
         if (!compiled) {
-            Object callable = headNode.executeGeneric(frame);
+            Object callable;
+            try (TailCallGuard ignored = new TailCallGuard(TailCall.NO)) {
+                callable = headNode.executeGeneric(frame);
+            }
+
             if (callable instanceof ElCallable elCallable) {
                 if (elCallable.isMacro()) {
                     // TODO

@@ -1,9 +1,9 @@
 package com.en_circle.el.nodes;
 
-import com.en_circle.el.runtime.ElCallable;
-import com.en_circle.el.runtime.ElEnvironment;
-import com.en_circle.el.runtime.ElHasSourceInfo;
-import com.en_circle.el.runtime.ElPair;
+import com.en_circle.el.context.TailCall;
+import com.en_circle.el.context.TailCallGuard;
+import com.en_circle.el.nodes.control.ElTailCallException;
+import com.en_circle.el.runtime.*;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
@@ -32,8 +32,23 @@ public class ElCallFunction extends ElNode {
     public Object executeGeneric(VirtualFrame frame) throws UnexpectedResultException {
         List<Object> arguments = new ArrayList<>();
         for (ElNode node : evalList) {
-            arguments.add(node.executeGeneric(frame));
+            try (TailCallGuard ignored = new TailCallGuard(TailCall.NO)) {
+                arguments.add(node.executeGeneric(frame));
+            }
         }
-        return callable.getCallTarget().call(arguments.toArray());
+
+        Object[] args = arguments.toArray();
+        if (TailCallGuard.STATE.get() == TailCall.YES && callable.equals(TailCallGuard.CURRENT_FUNCTION.get())) {
+            throw new ElTailCallException(args);
+        }
+
+        for (;;) {
+            try (TailCallGuard ignored = new TailCallGuard(TailCall.YES, callable instanceof ElFunction ?
+                    ((ElFunction) callable) : null)) {
+                return callable.getCallTarget().call(args);
+            } catch (ElTailCallException tailCallException) {
+                args = tailCallException.getNewArguments();
+            }
+        }
     }
 }

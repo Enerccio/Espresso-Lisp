@@ -1,6 +1,8 @@
 package com.en_circle.el.nodes;
 
 import com.en_circle.el.context.ElContext;
+import com.en_circle.el.context.TailCall;
+import com.en_circle.el.context.TailCallGuard;
 import com.en_circle.el.context.exceptions.ElCompileException;
 import com.en_circle.el.runtime.ElEnvironment;
 import com.en_circle.el.runtime.ElHasSourceInfo;
@@ -31,7 +33,10 @@ public class ElIfNode extends ElNode {
     public Object executeGeneric(VirtualFrame frame) throws UnexpectedResultException {
         ElSymbol nil = ElContext.get(this).getNil();
 
-        Object testResult = test.executeGeneric(frame);
+        Object testResult;
+        try (TailCallGuard ignored = new TailCallGuard(TailCall.NO)) {
+            testResult = test.executeGeneric(frame);
+        }
         if (testResult != nil) {
             return iftrue.executeGeneric(frame);
         } else {

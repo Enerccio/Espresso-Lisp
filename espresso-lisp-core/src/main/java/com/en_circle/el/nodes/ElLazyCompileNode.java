@@ -2,6 +2,8 @@ package com.en_circle.el.nodes;
 
 import com.en_circle.el.ElLanguage;
 import com.en_circle.el.context.ElContext;
+import com.en_circle.el.context.TailCall;
+import com.en_circle.el.context.TailCallGuard;
 import com.en_circle.el.context.exceptions.ElRuntimeException;
 import com.en_circle.el.runtime.ElEnvironment;
 import com.en_circle.el.runtime.ElNativeFunction;
@@ -45,9 +47,11 @@ public class ElLazyCompileNode extends RootNode implements ElEnvironmentChangeNo
     @Override
     public Object execute(VirtualFrame frame) {
         try {
-            Object returnValue = internalCallNode.executeGeneric(frame);
-            if (continueEval == null) {
-                return returnValue;
+            try (TailCallGuard ignored = new TailCallGuard(continueEval == null ? TailCallGuard.STATE.get() : TailCall.NO)) {
+                Object returnValue = internalCallNode.executeGeneric(frame);
+                if (continueEval == null) {
+                    return returnValue;
+                }
             }
             RootNode target = (RootNode) continueEval.call(source, environment);
             return target.getCallTarget().call();

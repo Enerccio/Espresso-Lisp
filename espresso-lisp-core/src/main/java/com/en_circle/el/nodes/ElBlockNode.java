@@ -1,6 +1,8 @@
 package com.en_circle.el.nodes;
 
 import com.en_circle.el.context.ElContext;
+import com.en_circle.el.context.TailCall;
+import com.en_circle.el.context.TailCallGuard;
 import com.en_circle.el.runtime.ElEnvironment;
 import com.en_circle.el.runtime.ElHasSourceInfo;
 import com.en_circle.el.runtime.ElPair;
@@ -24,8 +26,12 @@ public class ElBlockNode extends ElNode {
     @Override
     public Object executeGeneric(VirtualFrame frame) throws UnexpectedResultException {
         Object last = ElContext.get(this).getNil();
-        for (ElNode node : nodes)
-            last = node.executeGeneric(frame);
+        for (int ix=0; ix<nodes.size(); ix++) {
+            ElNode node = nodes.get(ix);
+            try (TailCallGuard ignored = new TailCallGuard(ix == nodes.size() - 1 ? TailCall.YES : TailCall.NO)) {
+                last = node.executeGeneric(frame);
+            }
+        }
         return last;
     }
 }

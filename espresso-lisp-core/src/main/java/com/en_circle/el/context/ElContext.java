@@ -36,6 +36,7 @@ public class ElContext {
     private final AtomicInteger gensymCounter = new AtomicInteger(0);
     private ElSymbol nil;
     private ElSymbol t;
+    private final ElMathContext mathContext = new ElMathContext(this);
 
     public ElContext(Env env, ElLanguage elLanguage) {
         this.language = elLanguage;
@@ -168,5 +169,9 @@ public class ElContext {
         }
 
         return nameSymbol;
+    }
+
+    public ElMathContext getMathContext() {
+        return mathContext;
     }
 }

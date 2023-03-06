@@ -4,6 +4,7 @@ import com.en_circle.el.ElLanguage;
 import com.en_circle.el.context.ElCompiledSignature;
 import com.en_circle.el.context.exceptions.ElRuntimeException;
 import com.en_circle.el.nodes.control.ElReturnException;
+import com.en_circle.el.nodes.control.ElTailCallException;
 import com.en_circle.el.runtime.ElClosure;
 import com.en_circle.el.runtime.ElEnvironment;
 import com.en_circle.el.runtime.ElFunction;
@@ -12,7 +13,6 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
 public class ElFunctionEnterNode extends RootNode {
 
@@ -42,12 +42,14 @@ public class ElFunctionEnterNode extends RootNode {
     public Object execute(VirtualFrame frame) {
         try {
             return node.executeGeneric(frame);
-        } catch (UnexpectedResultException e) {
-            throw new RuntimeException(e);
+        } catch (ElTailCallException exception) {
+            throw exception;
         } catch (ElReturnException returnException) {
             return returnException.getReturnValue();
         } catch (ControlFlowException otherControlFlows) {
             throw new ElRuntimeException("Unexpected control flow!", otherControlFlows, -1, node);
+        } catch (Exception e) {
+            throw new ElRuntimeException(e);
         }
     }
 
