@@ -33,16 +33,18 @@ public class ElCompiledSignature implements ArgumentsToClosure {
 
         if (allArgs != null) {
             closure.setBinding(allArgs, ElPair.fromList(Arrays.asList(arguments)));
-        }
+        } else {
+            if (requiredArguments.size() != arguments.length) {
+                throw new ElArgumentsException(String.format("Wrong number of parameters for signature <%s>, required %s, got %s",
+                        signature,
+                        requiredArguments.size(), arguments.length), parentNode);
+            }
 
-        if (requiredArguments.size() != arguments.length) {
-            throw new ElArgumentsException("Bad arity", parentNode);
-        }
-
-        for (int ix=0; ix<arguments.length; ix++) {
-            ElSymbol symbol = requiredArguments.get(ix);
-            Object value = arguments[ix];
-            closure.setBinding(symbol, value);
+            for (int ix = 0; ix < arguments.length; ix++) {
+                ElSymbol symbol = requiredArguments.get(ix);
+                Object value = arguments[ix];
+                closure.setBinding(symbol, value);
+            }
         }
     }
 
@@ -84,6 +86,6 @@ public class ElCompiledSignature implements ArgumentsToClosure {
                 return;
         }
 
-        throw new ElCompileException("Wrong signature", node);
+        throw new ElCompileException(String.format("Wrong signature <%s>", signature), node);
     }
 }

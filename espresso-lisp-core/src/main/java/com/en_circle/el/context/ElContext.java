@@ -7,6 +7,7 @@ import com.en_circle.el.nodes.ElBlockNode;
 import com.en_circle.el.nodes.ElFunctionEnterNode;
 import com.en_circle.el.nodes.ElNodeMetaInfo;
 import com.en_circle.el.runtime.*;
+import com.en_circle.el.utils.IOUtils;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.TruffleLanguage.Env;
@@ -30,6 +31,7 @@ public class ElContext {
 
     private AllocationReporter reporter;
     private ElEnvironment builtins;
+    private ElEnvironment builtinsInternal;
     private final ElLanguage language;
     private final Map<String, ElSymbol> internSymbolMap = new ConcurrentHashMap<>();
     private final AtomicInteger envCounter = new AtomicInteger(0);
@@ -49,38 +51,54 @@ public class ElContext {
         return true;
     }
 
-    public void setup() {
+    public void setup() throws Exception {
         builtins = ElShapeFactory.allocateEnvironment(this, null);
+        builtinsInternal = ElShapeFactory.allocateEnvironment(this, "Internal Builtins");
+        builtins.setBinding(allocateSymbol("int"), builtinsInternal);
         nil = ElSymbolHelper.getSymbol("nil");
         t = ElSymbolHelper.getSymbol("t");
 
-        addToBuiltin(new LispEnvironmentInfo(this).build());
-        addToBuiltin(new LispCompile(this).build());
-        addToBuiltin(new LispPrintln(this).build());
-        addToBuiltin(new LispCons(this).build());
-        addToBuiltin(new LispCar(this).build());
-        addToBuiltin(new LispCdr(this).build());
-        addToBuiltin(new LispPlus(this).build());
-        addToBuiltin(new LispMinus(this).build());
-        addToBuiltin(new LispEqualSign(this).build());
+        addToBuiltin(new LispCompile(this).build(), builtinsInternal);
+
+        // required for defmacro.espl
+        addToBuiltin(new LispCar(this).build(), builtins);
+        addToBuiltin(new LispCdr(this).build(), builtins);
+
+        addToBuiltin(ElContext.class.getResource("/stdlib/defmacro.espl"), builtins);
+        addToBuiltin(ElContext.class.getResource("/stdlib/defun.espl"), builtins);
+
+        addToBuiltin(new LispEnvironmentInfo(this).build(), builtins);
+        addToBuiltin(new LispGensym(this).build(), builtins);
+        addToBuiltin(new LispPrintln(this).build(), builtins);
+        addToBuiltin(new LispCons(this).build(), builtins);
+        addToBuiltin(new LispPlus(this).build(), builtins);
+        addToBuiltin(new LispMinus(this).build(), builtins);
+        addToBuiltin(new LispEqualSign(this).build(), builtins);
+
+        addToBuiltin(ElContext.class.getResource("/stdlib/list.espl"), builtins);
     }
 
-    private void addToBuiltin(ElNativeFunction nativeFunction) {
-        builtins.setBinding(allocateSymbol(nativeFunction.getIdentifier()), nativeFunction);
+    private void addToBuiltin(URL resource, ElEnvironment environment) throws Exception {
+        loadBuiltin(resource, environment);
+    }
+
+    private void addToBuiltin(ElNativeFunction nativeFunction, ElEnvironment environment) {
+        environment.setBinding(allocateSymbol(nativeFunction.getIdentifier()), nativeFunction);
     }
 
     public void runShutdownHooks() {
 
     }
 
-    public CallTarget parse(Source source) throws Exception {
+    public CallTarget parse(Source source) {
         ElNativeFunction compileFunction = getCompileFunction();
         RootNode compilationUnit = (RootNode) compileFunction.getCallTarget().call(source, createEnvironment());
         return compilationUnit.getCallTarget();
     }
 
-    private void loadBuiltin(URL builtin) throws Exception {
-        Source source = Source.newBuilder(ElLanguage.ID, builtin).build();
+    private void loadBuiltin(URL builtinComponent, ElEnvironment builtins) throws Exception {
+        String data = IOUtils.fromURL(builtinComponent);
+        Source source = Source.newBuilder(ElLanguage.ID, data, builtinComponent.toURI().getPath()).build();
         ElNativeFunction compileFunction = getCompileFunction();
         RootNode compilationUnit = (RootNode) compileFunction.getCallTarget().call(source, builtins);
         compilationUnit.getCallTarget().call();
@@ -115,8 +133,10 @@ public class ElContext {
         return allocateGensym(gensymCounter.getAndIncrement());
     }
 
-    public ElSymbol allocateGensym(int numberOverride) {
-        return new ElSymbol(String.format("gensym %i", numberOverride), true);
+    public ElSymbol allocateGensym(Object numberOverride) {
+        if (numberOverride == nil)
+            return allocateGensym();
+        return new ElSymbol(String.format("gensym %s", numberOverride), true);
     }
 
     public ElSymbol getNil() {
@@ -132,7 +152,7 @@ public class ElContext {
     }
 
     public ElNativeFunction getCompileFunction() {
-        return (ElNativeFunction) builtins.getBinding(allocateSymbol(LispCompile.NAME));
+        return (ElNativeFunction) builtinsInternal.getBinding(allocateSymbol(LispCompile.NAME));
     }
 
     public ElSymbol defineFunction(ElNodeMetaInfo metaInfo, ElEnvironment environment, ElClosure parentClosure,

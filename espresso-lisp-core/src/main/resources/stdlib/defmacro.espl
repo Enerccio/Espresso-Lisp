@@ -1,0 +1,7 @@
+; REQUIRES: car cdr
+
+(int:define! macro defmacro args
+    (let ((name (car args))
+          (arguments (car (cdr args)))
+          (body (cdr (cdr args))))
+        `(int:define! macro ,name ,arguments ,@body)))

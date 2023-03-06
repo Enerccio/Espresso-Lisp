@@ -20,7 +20,7 @@ public class ElGenericSexpressionEval extends ElNode {
     private ElReplacingNode replacingNode;
 
     public ElGenericSexpressionEval(ElNodeMetaInfo metaInfo,
-                                    ElEvalListNode elEvalListNode, ElEnvironment environment,
+                                    ElEnvironment environment,
                                     ElSymbol symbol, Object arguments) {
         super(metaInfo);
         this.environment = environment;
@@ -38,7 +38,6 @@ public class ElGenericSexpressionEval extends ElNode {
 
             if (callable instanceof ElCallable elCallable) {
                 if (elCallable.isMacro()) {
-                    // TODO
                     ElCallMacro callMacro = new ElCallMacro(metaInfo, environment, elCallable, arguments);
                     Object returnAst = callMacro.executeGeneric(frame);
                     replacingNode.replace(new ElEvalNode(ElHasSourceInfo.get(returnAst), environment, returnAst));

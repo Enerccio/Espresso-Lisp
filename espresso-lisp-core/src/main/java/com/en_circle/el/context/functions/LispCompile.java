@@ -128,6 +128,15 @@ public class LispCompile implements InvokeWithArguments {
                 case QUOTE -> {
                     return quoted(source, lexer, token);
                 }
+                case BACKQUOTE -> {
+                    return backquoted(source, lexer, token);
+                }
+                case COMMA -> {
+                    return comma(source, lexer, token);
+                }
+                case AMPERSAND -> {
+                    unexpectedToken(token);
+                }
                 case LPAREN -> {
                     return list(source, lexer, token);
                 }
@@ -154,7 +163,35 @@ public class LispCompile implements InvokeWithArguments {
     private Object quoted(Source source, ElLexer lexer, TokenInfo token) {
         Object quotedElement = sexpression(source, lexer);
         Object quote = ElHasSourceInfo.withSource(context.allocateSymbol("quote"), toMetaInfo(source, token));
-        ElPair list = ElPair.fromList(Arrays.asList(quote, quotedElement));
+        Object list = ElPair.fromList(Arrays.asList(quote, quotedElement));
+        return ElHasSourceInfo.withSource(list, toMetaInfo(source, token));
+    }
+
+    private Object backquoted(Source source, ElLexer lexer, TokenInfo token) {
+        Object quotedElement = sexpression(source, lexer);
+        Object quote = ElHasSourceInfo.withSource(context.allocateSymbol("backquote"), toMetaInfo(source, token));
+        Object list = ElPair.fromList(Arrays.asList(quote, quotedElement));
+        return ElHasSourceInfo.withSource(list, toMetaInfo(source, token));
+    }
+
+    private Object comma(Source source, ElLexer lexer, TokenInfo token) {
+        ElLexerState state = lexer.mark();
+
+        boolean isAmpersand = false;
+        TokenInfo nextToken = lexer.advance();
+        if (nextToken.getTokenType() != TokenType.EOF) {
+            if (nextToken.getTokenType() == TokenType.AMPERSAND) {
+                isAmpersand = true;
+            } else {
+                lexer.seek(state);
+            }
+        } else {
+            lexer.seek(state);
+        }
+
+        Object quotedElement = sexpression(source, lexer);
+        Object quote = ElHasSourceInfo.withSource(context.allocateSymbol(isAmpersand ? "unquote-splice" : "unquote"), toMetaInfo(source, token));
+        Object list = ElPair.fromList(Arrays.asList(quote, quotedElement));
         return ElHasSourceInfo.withSource(list, toMetaInfo(source, token));
     }
 

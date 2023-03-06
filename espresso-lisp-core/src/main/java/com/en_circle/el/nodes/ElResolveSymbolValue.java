@@ -36,8 +36,8 @@ public class ElResolveSymbolValue extends ElNode {
 
         ElClosure currentClosure = closure;
         while (currentClosure != null) {
-            if (closure.hasBinding(symbol)) {
-                return closure.getBinding(symbol);
+            if (currentClosure.hasBinding(symbol)) {
+                return currentClosure.getBinding(symbol);
             }
             currentClosure = currentClosure.getParentClosure();
         }

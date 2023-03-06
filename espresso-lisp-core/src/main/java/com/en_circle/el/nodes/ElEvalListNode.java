@@ -1,6 +1,7 @@
 package com.en_circle.el.nodes;
 
 import com.en_circle.el.context.ElContext;
+import com.en_circle.el.context.QuoteContext;
 import com.en_circle.el.context.exceptions.ElRuntimeException;
 import com.en_circle.el.runtime.ElClosure;
 import com.en_circle.el.runtime.ElEnvironment;
@@ -17,6 +18,8 @@ public class ElEvalListNode extends ElNode {
     private ElNode compiled;
     private ElEnvironmentChangeNode toplevelNode;
     private ElReplacingNode parentNode;
+    private boolean isSplice;
+    private boolean evaluateInBackquote = false;
 
     public ElEvalListNode(ElNodeMetaInfo metaInfo, ElPair nodes, ElEnvironment environment) {
         super(metaInfo);
@@ -30,30 +33,54 @@ public class ElEvalListNode extends ElNode {
             compile((ElClosure) frame.getObject(SLOT_CLOSURE));
             state = EvalExpressionState.COMPILED;
         }
-        return compiled.executeGeneric(frame);
+        if (evaluateInBackquote) {
+            return QuoteContext.evaluateBackQuote(compiled, frame);
+        } else {
+            return compiled.executeGeneric(frame);
+        }
     }
 
     private void compile(ElClosure closure) {
         if (!ElPair.empty(nodes)) {
             Object head = ElPair.car(nodes);
             Object arguments = ElPair.cdr(nodes);
+
             if (head instanceof ElSymbol symbol) {
-                // TODO special forms
+                if (QuoteContext.isInBackQuote()) {
+                    if ("unquote".equals(symbol.getName())) {
+                        compiled = new ElEvalNode(getMetaInfo(), environment, ElPair.nth(nodes, 1));
+                        evaluateInBackquote = true;
+                    } else if ("unquote-splice".equals(symbol.getName())) {
+                        compiled = new ElEvalNode(getMetaInfo(), environment, ElPair.nth(nodes, 1));
+                        isSplice = true;
+                        evaluateInBackquote = true;
+                    } else {
+                        compiled = new ElBackQuoteEvalNode(getMetaInfo(), environment, arguments);
+                    }
+                    return;
+                }
+
                 if ("quote".equals(symbol.getName())) {
                     compiled = new ElQuoteNode(getMetaInfo(), ElPair.nth(nodes, 1));
+                } else if ("backquote".equals(symbol.getName())) {
+                    compiled = new ElBackQuoteNode(getMetaInfo(), environment, ElPair.nth(nodes, 1));
+                } else if ("unquote".equals(symbol.getName())) {
+                    throw new ElRuntimeException("Unquote not in quote");
+                } else if ("unquote-splice".equals(symbol.getName())) {
+                    throw new ElRuntimeException("Unquote not in quote");
                 } else if ("if".equals(symbol.getName())) {
                     compiled = new ElIfNode(getMetaInfo(), environment, arguments);
-                } else if ("let!".equals(symbol.getName())) {
-                    compiled = new ElLetSingleNode(getMetaInfo(), environment, arguments);
+                } else if ("let".equals(symbol.getName())) {
+                    compiled = new ElLetNode(getMetaInfo(), environment, arguments);
                 } else if ("set".equals(symbol.getName())) {
                     Object binding = ElPair.car(arguments);
                     Object newValue = ElPair.cdr(arguments);
                     compiled = new ElSetNode(getMetaInfo(), environment, binding, ElPair.car(newValue));
-                } else if ("define!".equals(symbol.getName())) {
+                } else if ("int:define!".equals(symbol.getName())) {
                     compiled = new ElLiteralNode(getMetaInfo(),
                             ElContext.get(this).defineFunction(getMetaInfo(), environment, closure, arguments));
                 } else {
-                    compiled = new ElGenericSexpressionEval(getMetaInfo(), this, environment, symbol, arguments);
+                    compiled = new ElGenericSexpressionEval(getMetaInfo(), environment, symbol, arguments);
                     ((ElGenericSexpressionEval) compiled).setReplacingNode(parentNode);
                 }
             } else {
@@ -68,6 +95,10 @@ public class ElEvalListNode extends ElNode {
 
     public void setMacroExpandNode(ElReplacingNode node) {
         this.parentNode = node;
+    }
+
+    public boolean isSplice() {
+        return isSplice;
     }
 
     private enum EvalExpressionState {

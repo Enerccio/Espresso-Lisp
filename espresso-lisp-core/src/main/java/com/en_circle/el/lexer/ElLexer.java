@@ -9,11 +9,12 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 public class ElLexer {
-    private static final Pattern whitespace = Pattern.compile("[\\r\\n\\t \\x0c\\x0a]");
+    public static final Pattern whitespace = Pattern.compile("[\\r\\n\\t \\x0c\\x0a]");
 
-    private static final Pattern identifiers = Pattern.compile("[\\-_A-Za-z*$&=+/!0-9^?:%<>~.]");
+    public static final Pattern identifiers = Pattern.compile("[\\-_A-Za-z*$&=+/!0-9^?:%<>~.]");
+    public static final Pattern notIdentifiers = Pattern.compile("[^\\-_A-Za-z*$&=+/!0-9^?:%<>~.]");
     private static final Pattern digits = Pattern.compile("^[0-9]*$");
-    private Set<Character> reserved = new HashSet<>(Arrays.asList('#', ',', '.', '|', '@', '[', ']', '{', '}', '`'));
+    private Set<Character> reserved = new HashSet<>(Arrays.asList('#', '.', '|', '[', ']', '{', '}'));
 
     private final Source source;
     private int position;
@@ -70,6 +71,18 @@ public class ElLexer {
                 } else if (c == '\'') {
                     tokenInfo = mkToken();
                     tokenInfo.setTokenType(TokenType.QUOTE);
+                    break;
+                } else if (c == '`') {
+                    tokenInfo = mkToken();
+                    tokenInfo.setTokenType(TokenType.BACKQUOTE);
+                    break;
+                } else if (c == ',') {
+                    tokenInfo = mkToken();
+                    tokenInfo.setTokenType(TokenType.COMMA);
+                    break;
+                } else if (c == '@') {
+                    tokenInfo = mkToken();
+                    tokenInfo.setTokenType(TokenType.AMPERSAND);
                     break;
                 } else if (c == '"') {
                     tokenInfo = mkToken();

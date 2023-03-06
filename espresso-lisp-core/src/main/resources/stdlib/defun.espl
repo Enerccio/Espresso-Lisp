@@ -1,0 +1,5 @@
+(defmacro defun args
+    (let ((name (car args))
+          (arguments (car (cdr args)))
+          (body (cdr (cdr args))))
+    `(int:define! function ,name ,arguments ,@body)))

@@ -1,5 +1,6 @@
 package com.en_circle.el.runtime;
 
+import com.en_circle.el.lexer.ElLexer;
 import com.en_circle.el.nodes.ElNodeMetaInfo;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -13,6 +14,7 @@ public class ElSymbol implements ElObject, ElHasSourceInfo, Comparable<ElSymbol>
     private final String name;
     private final boolean anonymous;
     private final boolean isCompound;
+    private final boolean garbage;
     private ElNodeMetaInfo metaInfo;
 
     public ElSymbol(String name) {
@@ -25,6 +27,7 @@ public class ElSymbol implements ElObject, ElHasSourceInfo, Comparable<ElSymbol>
         this.name = name;
         this.anonymous = anonymous;
         this.isCompound = name.contains(":");
+        this.garbage = ElLexer.notIdentifiers.matcher(name).find();
     }
 
     @Override
@@ -66,6 +69,9 @@ public class ElSymbol implements ElObject, ElHasSourceInfo, Comparable<ElSymbol>
     @Override
     @ExportMessage
     public Object toDisplayString(boolean allowSideEffects) {
+        if (garbage) {
+            return "|" + name + "|";
+        }
         return name;
     }
 

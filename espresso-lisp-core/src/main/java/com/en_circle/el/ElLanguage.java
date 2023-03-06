@@ -26,7 +26,7 @@ public final class ElLanguage extends TruffleLanguage<ElContext> {
     }
 
     @Override
-    protected void initializeContext(ElContext context) {
+    protected void initializeContext(ElContext context) throws Exception {
         context.setup();
     }
 

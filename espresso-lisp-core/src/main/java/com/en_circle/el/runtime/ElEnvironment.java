@@ -104,7 +104,12 @@ public class ElEnvironment extends DynamicObject implements ElObject {
     @Override
     @ExportMessage
     public Object toDisplayString(boolean allowSideEffects) {
-        return toString() + "<" + (name == null ? "_builtins" : name) + ">";
+        return "Environment<" + (name == null ? "_builtins" : name) + ">";
+    }
+
+    @Override
+    public String toString() {
+        return (String) toDisplayString(false);
     }
 
 }

@@ -1,0 +1,15 @@
+(defun list args
+    args)
+
+(defun caar (l) (car (car l)))
+(defun cdar (l) (car (cdr l)))
+(defun cadr (l) (cdr (car l)))
+(defun cddr (l) (cdr (cdr l)))
+(defun caaar (l) (car (car (car l))))
+(defun cdaar (l) (car (car (cdr l))))
+(defun cadar (l) (car (cdr (car l))))
+(defun caadr (l) (cdr (car (car l))))
+(defun cddar (l) (car (cdr (cdr l))))
+(defun caddr (l) (cdr (cdr (car l))))
+(defun cdadr (l) (cdr (car (cdr l))))
+(defun cdddr (l) (cdr (cdr (cdr l))))

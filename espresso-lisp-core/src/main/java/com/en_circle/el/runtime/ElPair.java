@@ -1,6 +1,7 @@
 package com.en_circle.el.runtime;
 
 import com.en_circle.el.context.ElContext;
+import com.en_circle.el.context.exceptions.ElRuntimeException;
 import com.en_circle.el.nodes.ElNodeMetaInfo;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -141,6 +142,15 @@ public class ElPair implements ElObject, ElHasSourceInfo {
         return Collections.singleton(ElContext.get(null).getNil());
     }
 
+    public static Iterable<Object> asStrictIterator(Object list) {
+        Object nil = ElContext.get(null).getNil();
+        if (list == nil)
+            return Collections.singleton(nil);
+        if (list instanceof ElPair pair)
+            return new PairIterable(pair);
+        throw new ElRuntimeException("Object " + list + " is not list/nil");
+    }
+
     private record PairIterable(ElPair head) implements Iterable<Object> {
 
         @Override
@@ -170,7 +180,10 @@ public class ElPair implements ElObject, ElHasSourceInfo {
         }
     }
 
-    public static ElPair fromList(List<Object> elements) {
+    public static Object fromList(List<Object> elements) {
+        if (elements == null || elements.size() == 0)
+            return ElContext.get(null).getNil();
+
         ElPair head = new ElPair(elements.get(0));
         ElPair current = head;
         for (int i=1; i<elements.size(); i++) {

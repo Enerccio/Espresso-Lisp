@@ -13,7 +13,7 @@ import java.util.List;
 public class ElCallFunction extends ElNode {
 
     private final ElCallable callable;
-    private final List<ElNode> evalList = new ArrayList<>();
+    private final List<ElEvalNode> evalList = new ArrayList<>();
 
     public ElCallFunction(ElNodeMetaInfo metaInfo, ElEnvironment environment,
                           ElCallable callable, Object arguments) {
@@ -31,9 +31,10 @@ public class ElCallFunction extends ElNode {
     @Override
     public Object executeGeneric(VirtualFrame frame) throws UnexpectedResultException {
         List<Object> arguments = new ArrayList<>();
-        for (ElNode node : evalList) {
+        for (ElEvalNode node : evalList) {
             try (TailCallGuard ignored = new TailCallGuard(TailCall.NO)) {
-                arguments.add(node.executeGeneric(frame));
+                Object value = node.executeGeneric(frame);
+                arguments.add(value);
             }
         }
 
